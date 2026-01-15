@@ -1,0 +1,6 @@
+﻿Prometheus has been deployed!
+
+Run the following command to access it:
+  kubectl port-forward svc/{{ .Release.Name }}-prometheus 9090:9090
+
+Then open http://localhost:9090

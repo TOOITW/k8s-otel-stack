@@ -1,0 +1,6 @@
+﻿# Prometheus 設定
+prometheus:
+  replicas: 1
+  image:
+    repository: prom/prometheus
+    tag: latest
