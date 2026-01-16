@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-config
+data:
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+      # Prometheus - Metrics
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://{{ .Release.Name }}-prometheus:9090
+        isDefault: true
+        editable: true
+        jsonData:
+          httpMethod: POST
+          exemplarTraceIdDestinations:
+            - name: traceID
+              datasourceUid: tempo
+
+      # Tempo - Traces
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://{{ .Release.Name }}-tempo:3200
+        uid: tempo
+        editable: true
+        jsonData:
+          httpMethod: GET
+          tracesToLogs:
+            datasourceUid: loki
+            tags: ['service.name', 'service.namespace']
+            mappedTags: [{ key: 'service.name', value: 'service_name' }]
+            mapTagNamesEnabled: true
+            filterByTraceID: true
+            filterBySpanID: false
+          tracesToMetrics:
+            datasourceUid: prometheus
+            tags: [{ key: 'service.name', value: 'service' }]
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
+          lokiSearch:
+            datasourceUid: loki
+
+      # Loki - Logs
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://{{ .Release.Name }}-loki:3100
+        uid: loki
+        editable: true
+        jsonData:
+          derivedFields:
+            - name: TraceID
+              matcherRegex: '"traceId":"(\w+)"'
+              url: '$${__value.raw}'
+              datasourceUid: tempo

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-otel-collector
+spec:
+  replicas: {{ .Values.otelCollector.replicas }}
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:                          # ← Pod 的 spec
+      containers:                  # ← 容器定義
+        - name: otel-collector
+          image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
+          ports:
+            - containerPort: 4317
+            - containerPort: 4318
+            - containerPort: 8888
+            - containerPort: 8889
+          volumeMounts:            # ← 加在 container 裡面
+            - name: otel-collector-config-volume
+              mountPath: /etc/otelcol-contrib
+          args:
+            - --config=/etc/otelcol-contrib/otel-collector.yml
+      volumes:                     # ← 加在 containers 同一層（spec 底下）
+        - name: otel-collector-config-volume
+          configMap:
+            name: {{ .Release.Name }}-otel-config        # ← 指定 ConfigMap 名稱

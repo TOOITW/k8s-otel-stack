@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-grafana
+spec:
+  replicas: {{ .Values.grafana.replicas }}
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:                          # ← Pod 的 spec
+      containers:                  # ← 容器定義
+        - name: grafana
+          image: {{ .Values.grafana.image.repository }}:{{ .Values.grafana.image.tag }}
+          ports:
+            - containerPort: 3000
+          volumeMounts:            # ← 加在 container 裡面
+            - name: grafana-config-volume
+              mountPath: /etc/grafana/provisioning/datasources
+      volumes:                     # ← 加在 containers 同一層（spec 底下）
+        - name: grafana-config-volume
+          configMap:
+            name: {{ .Release.Name }}-grafana-config        # ← 指定 ConfigMap 名稱

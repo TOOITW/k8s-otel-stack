@@ -17,17 +17,17 @@ data:
       # OTel Collector metrics
       - job_name: 'otel-collector'
         static_configs:
-          - targets: ['otel-collector:8888']
+          - targets: ['{{ .Release.Name }}-otel-collector:8888']
 
       # Tempo metrics
       - job_name: 'tempo'
         static_configs:
-          - targets: ['tempo:3200']
+          - targets: ['{{ .Release.Name }}-tempo:3200']
 
       # Loki metrics
       - job_name: 'loki'
         static_configs:
-          - targets: ['loki:3100']
+          - targets: ['{{ .Release.Name }}-loki:3100']
 
       # Windows 主機 metrics
       - job_name: 'windows'

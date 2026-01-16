@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-otel-config
+data:
+  otel-collector.yml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      hostmetrics:
+        collection_interval: 10s
+        scrapers:
+          cpu:
+          memory:
+          load:
+          disk:
+          network:
+
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
+
+      # 加入 resource 資訊
+      resource:
+        attributes:
+          - key: service.instance.id
+            from_attribute: host.name
+            action: insert
+
+    exporters:
+      # Traces -> Tempo
+      otlp/tempo:
+        endpoint: {{ .Release.Name }}-tempo:4317
+        tls:
+          insecure: true
+
+      # Metrics -> Prometheus (remote write)
+      prometheusremotewrite:
+        endpoint: http://{{ .Release.Name }}-prometheus:9090/api/v1/write
+        tls:
+          insecure: true
+
+      # Logs -> Loki
+      otlphttp/loki:
+        endpoint: http://{{ .Release.Name }}-loki:3100/otlp
+
+      # Debug output (開發時方便看)
+      debug:
+        verbosity: detailed
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch, resource]
+          exporters: [otlp/tempo, debug]
+
+        metrics:
+          receivers: [otlp, hostmetrics]
+          processors: [batch, resource]
+          exporters: [prometheusremotewrite, debug]
+
+        logs:
+          receivers: [otlp]
+          processors: [batch, resource]
+          exporters: [otlphttp/loki, debug]
+
+      telemetry:
+        logs:
+          level: info

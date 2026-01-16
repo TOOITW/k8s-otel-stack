@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-loki
+spec:
+  replicas: {{ .Values.loki.replicas }}
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec: # ← Pod 的 spec
+      containers: # ← 容器定義
+        - name: loki
+          image: {{ .Values.loki.image.repository }}:{{ .Values.loki.image.tag }}
+          ports:
+            - containerPort: 3100
+          volumeMounts: # ← 加在 container 裡面
+            - name: loki-config-volume
+              mountPath: /etc/loki
+          args:
+            - -config.file=/etc/loki/loki.yml
+      volumes: # ← 加在 containers 同一層（spec 底下）
+        - name: loki-config-volume
+          configMap:
+            name: {{ .Release.Name }}-loki-config # ← 指定 ConfigMap 名稱

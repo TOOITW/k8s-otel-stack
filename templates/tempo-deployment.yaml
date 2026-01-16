@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-tempo
+spec:
+  replicas: {{ .Values.tempo.replicas }}
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec: # ← Pod 的 spec
+      containers: # ← 容器定義
+        - name: tempo
+          image: {{ .Values.tempo.image.repository }}:{{ .Values.tempo.image.tag }}
+          ports:
+            - containerPort: 3200
+            - containerPort: 9095
+          volumeMounts: # ← 加在 container 裡面
+            - name: tempo-config-volume
+              mountPath: /etc/tempo
+          args:
+            - -config.file=/etc/tempo/tempo.yml
+      volumes: # ← 加在 containers 同一層（spec 底下）
+        - name: tempo-config-volume
+          configMap:
+            name: {{ .Release.Name }}-tempo-config # ← 指定 ConfigMap 名稱

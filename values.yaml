@@ -4,3 +4,28 @@ prometheus:
   image:
     repository: prom/prometheus
     tag: latest
+
+# Grafana 設定
+grafana:
+  replicas: 1
+  image:
+    repository: grafana/grafana
+    tag: latest
+
+loki:
+  replicas: 1
+  image:
+    repository: grafana/loki
+    tag: latest
+
+tempo:
+  replicas: 1
+  image:
+    repository: grafana/tempo
+    tag: latest
+
+otelCollector:
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: latest
+  replicas: 1
